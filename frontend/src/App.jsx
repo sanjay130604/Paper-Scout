@@ -1,78 +1,84 @@
-import React, { useState } from "react";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useState, useEffect } from "react";
 
-const PaperScout = () => {
-  // Sample papers data
-  const [papers, setPapers] = useState([
-    {
-      id: 1,
-      title: "Deep Learning for NLP",
-      summary: "An overview of deep learning techniques applied to natural language processing."
-    },
-    {
-      id: 2,
-      title: "Quantum Computing Advances",
-      summary: "A review of recent breakthroughs in quantum computing research."
-    },
-    {
-      id: 3,
-      title: "AI in Healthcare",
-      summary: "Exploring the impact of artificial intelligence on healthcare systems."
-    }
-  ]);
+export default function App() {
+  const [query, setQuery] = useState("");
+  const [users, setUsers] = useState([]);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // Fetch users from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/users")
+      .then((res) => res.json())
+      .then(setUsers)
+      .catch(console.error);
+  }, []);
 
-  const handleSearch = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you can implement actual search functionality
-    alert(`Searching for: ${searchTerm}`);
+    if (!query) return;
+
+    const res = await fetch("http://localhost:5000/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: query, email: `${query}@mail.com` }),
+    });
+
+    if (res.ok) {
+      const newUser = await res.json();
+      setUsers([newUser, ...users]);
+      setQuery("");
+    }
   };
 
   return (
-    <>
-      {/* Search Section */}
-      <section className="py-5 bg-light">
-        <div className="container-fluid text-center">
-          <h1 className="mb-4">Discover Research Papers</h1>
-          <form className="d-flex justify-content-center" onSubmit={handleSearch}>
-            <input
-              className="form-control me-2 w-50"
-              type="search"
-              placeholder="Search papers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button className="btn btn-primary" type="submit">Search</button>
-          </form>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-indigo-600">PaperScout</h1>
         </div>
-      </section>
+      </header>
 
-      {/* Papers Section */}
-      <section className="py-5">
-        <div className="container-fluid">
-          <div className="row g-4 justify-content-center">
-            {papers.map((paper) => (
-              <div className="col-md-4" key={paper.id}>
-                <div className="card h-100">
-                  <div className="card-body">
-                    <h5 className="card-title">{paper.title}</h5>
-                    <p className="card-text">{paper.summary}</p>
-                    <a href="/" className="btn btn-primary">Read More</a>
-                  </div>
-                </div>
+      <main className="flex-1">
+        <section className="py-16 bg-gradient-to-b from-white to-gray-50 text-center">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6">
+            Discover Research Papers
+          </h2>
+
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col sm:flex-row justify-center gap-3 max-w-2xl mx-auto"
+          >
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Enter name..."
+              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              Add
+            </button>
+          </form>
+        </section>
+
+        <section className="max-w-4xl mx-auto px-4 py-8">
+          <h3 className="text-xl font-semibold mb-4">Users</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {users.map((u) => (
+              <div key={u._id} className="bg-white p-5 rounded-xl shadow">
+                <h4 className="font-bold">{u.name}</h4>
+                <p className="text-gray-600 text-sm">{u.email}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="bg-primary text-white text-center py-3">
-        <div className="container-fluid">&copy; 2025 PaperScout. All rights reserved.</div>
+      <footer className="bg-white border-t py-4 text-center text-sm text-gray-500">
+        © {new Date().getFullYear()} PaperScout
       </footer>
-    </>
+    </div>
   );
-};
-
-export default PaperScout;
+}
